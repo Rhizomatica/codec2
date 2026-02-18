@@ -641,10 +641,14 @@ void symbols_to_llrs(float llr[], COMP rx_psk_symbols[], float rx_amps[],
                      float EsNo, float mean_amp, int bps, int nsyms) {
   int i;
   int constellation_points = 1 << bps;
-  float symbol_likelihood[nsyms * constellation_points];
-  float bit_likelihood[nsyms * bps];
+  size_t symbol_likelihood_size = (size_t)nsyms * constellation_points;
+  size_t bit_likelihood_size = (size_t)nsyms * bps;
+  float *symbol_likelihood = MALLOC(symbol_likelihood_size * sizeof(float));
+  float *bit_likelihood = MALLOC(bit_likelihood_size * sizeof(float));
 
   COMP *S_matrix;
+  assert(symbol_likelihood != NULL);
+  assert(bit_likelihood != NULL);
   assert((bps == 2) || (bps == 4));
   if (bps == 2) S_matrix = S_matrix_qpsk;
   if (bps == 4) S_matrix = S_matrix_qam16;
@@ -655,6 +659,8 @@ void symbols_to_llrs(float llr[], COMP rx_psk_symbols[], float rx_amps[],
   for (i = 0; i < nsyms * bps; i++) {
     llr[i] = -bit_likelihood[i];
   }
+  FREE(bit_likelihood);
+  FREE(symbol_likelihood);
 }
 
 /*

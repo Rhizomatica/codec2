@@ -524,9 +524,17 @@ int main(int argc, char *argv[]) {
           for (i = 0; i < Npayloadsymsperpacket; i++) {
             int bits[ofdm->bps];
             complex float s = payload_syms[i].real + I * payload_syms[i].imag;
-            qpsk_demod(s, bits);
-            rx_bits_char[ofdm_config->bps * i] = bits[1];
-            rx_bits_char[ofdm_config->bps * i + 1] = bits[0];
+            if (ofdm->bps == 2) {
+              qpsk_demod(s, bits);
+              rx_bits_char[ofdm_config->bps * i] = bits[1];
+              rx_bits_char[ofdm_config->bps * i + 1] = bits[0];
+            } else if (ofdm->bps == 4) {
+              qam16_demod(s, bits, payload_amps[i]);
+              for (int b = 0; b < ofdm->bps; b++)
+                rx_bits_char[ofdm_config->bps * i + b] = bits[ofdm->bps - 1 - b];
+            } else {
+              assert(0);
+            }
           }
 
           fwrite(rx_bits_char, sizeof(uint8_t), Npayloadbitsperpacket, fout);

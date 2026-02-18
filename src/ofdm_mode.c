@@ -138,8 +138,6 @@ void ofdm_init_mode(char mode[], struct OFDM_CONFIG *config) {
     config->clip_en = false;
     config->data_mode = "streaming";
     config->amp_scale = 135E3;
-    config->clip_en = false;
-    config->tx_bpf_en = false;
     config->rx_bpf_en = false;
 
     uint8_t uw[] = {1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1,
