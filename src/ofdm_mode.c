@@ -148,8 +148,8 @@ void ofdm_init_mode(char mode[], struct OFDM_CONFIG *config) {
 
     config->EsNodB = 10;
     config->codename = "H_16200_9720";
-    config->tx_bpf_proto = NULL;
-    config->tx_bpf_proto_n = 0;
+    config->tx_bpf_proto = filtP1100S1300;
+    config->tx_bpf_proto_n = sizeof(filtP1100S1300) / sizeof(float);
   } else if (strcmp(mode, "datac0") == 0) {
     config->ns = 5;
     config->np = 4;
