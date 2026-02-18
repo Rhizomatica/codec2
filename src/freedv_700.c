@@ -510,8 +510,43 @@ int freedv_comp_short_rx_ofdm(struct freedv *f, void *demod_in_8kHz,
       memcpy(f->rx_payload_bits, decoded_codeword, Ndatabitsperpacket);
 
       if (strlen(ofdm->data_mode)) {
+        int crc_ok =
+            freedv_check_crc16_unpacked(f->rx_payload_bits, Ndatabitsperpacket);
+        if (!crc_ok && f->verbose) {
+          int bytes_per_frame = (Ndatabitsperpacket + 7) / 8;
+          uint8_t rx_bytes[bytes_per_frame];
+          freedv_pack(rx_bytes, f->rx_payload_bits, Ndatabitsperpacket);
+          uint16_t rx_crc16 =
+              ((uint16_t)rx_bytes[bytes_per_frame - 2] << 8) |
+              rx_bytes[bytes_per_frame - 1];
+          uint16_t calc_crc16 =
+              freedv_gen_crc16(rx_bytes, bytes_per_frame - 2);
+          fprintf(stderr,
+                  "OFDM data CRC fail: mode=%s bytes=%d rx_crc=%04x calc_crc=%04x "
+                  "pcc=%d/%d iter=%d euw=%d foff=%4.1f\n",
+                  ofdm->mode, bytes_per_frame, rx_crc16, calc_crc16,
+                  parityCheckCount, ldpc->NumberParityBits, iter, ofdm->uw_errors,
+                  (double)ofdm->foff_est_hz);
+          if (f->verbose >= 2) {
+            int n = bytes_per_frame < 16 ? bytes_per_frame : 16;
+            fprintf(stderr, "  payload[0:%d] =", n);
+            for (int bi = 0; bi < n; bi++) fprintf(stderr, " %02x", rx_bytes[bi]);
+            fprintf(stderr, "\n");
+          }
+        } else if (crc_ok && f->verbose >= 2) {
+          int bytes_per_frame = (Ndatabitsperpacket + 7) / 8;
+          uint8_t rx_bytes[bytes_per_frame];
+          freedv_pack(rx_bytes, f->rx_payload_bits, Ndatabitsperpacket);
+          fprintf(stderr, "OFDM data OK: mode=%s bytes=%d pcc=%d/%d iter=%d\n",
+                  ofdm->mode, bytes_per_frame, parityCheckCount,
+                  ldpc->NumberParityBits, iter);
+          int n = bytes_per_frame < 16 ? bytes_per_frame : 16;
+          fprintf(stderr, "  payload[0:%d] =", n);
+          for (int bi = 0; bi < n; bi++) fprintf(stderr, " %02x", rx_bytes[bi]);
+          fprintf(stderr, "\n");
+        }
         // we need a valid CRC to declare a data packet valid
-        if (freedv_check_crc16_unpacked(f->rx_payload_bits, Ndatabitsperpacket))
+        if (crc_ok)
           rx_status |= FREEDV_RX_BITS;
         else
           rx_status |= FREEDV_RX_BIT_ERRORS;
