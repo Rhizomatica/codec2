@@ -19,8 +19,8 @@ int main(void) {
     int tx_bits[4], rx_bits[4];
     for (int i = 0; i < 4; i++) tx_bits[i] = (c >> (3 - i)) & 0x1;
     complex float symbol = qam16_mod(tx_bits);
-    qam16_demod(symbol, rx_bits);
-    if (memcmp(tx_bits, rx_bits, 4)) {
+    qam16_demod(symbol, rx_bits, 1.0);
+    if (memcmp(tx_bits, rx_bits, sizeof(tx_bits))) {
       fprintf(stderr, "FAIL on %d!\ntx_bits: ", c);
       for (int i = 0; i < 4; i++) fprintf(stderr, "%d ", tx_bits[i]);
       fprintf(stderr, "%f %f\nrx_bits: ", creal(symbol), cimag(symbol));

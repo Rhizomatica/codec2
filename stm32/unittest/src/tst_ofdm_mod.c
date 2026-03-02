@@ -189,7 +189,8 @@ int main(int argc, char *argv[]) {
              } else { // !config_ldpc_en
 
                 uint8_t tx_frame[Nbitsperframe];
-                ofdm_assemble_qpsk_modem_packet(ofdm, tx_frame, tx_bits_char, txt_bits_char);
+                ofdm_assemble_psk_modem_packet(ofdm, tx_frame, tx_bits_char,
+                                               txt_bits_char);
 
                 int tx_bits[Nbitsperframe];
                 for(i=0; i<Nbitsperframe; i++) {

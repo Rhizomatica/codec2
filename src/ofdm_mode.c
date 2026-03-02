@@ -42,6 +42,7 @@ void ofdm_init_mode(char mode[], struct OFDM_CONFIG *config) {
   config->state_machine = "voice1";
   config->data_mode = "";
   config->codename = "HRA_112_112";
+  config->EsNodB = 3.0;
   config->clip_gain1 = 2.5;
   config->clip_gain2 = 0.8;
   config->clip_en = true;
@@ -119,6 +120,36 @@ void ofdm_init_mode(char mode[], struct OFDM_CONFIG *config) {
     config->data_mode = "streaming";
     config->tx_bpf_proto = NULL;
     config->tx_bpf_proto_n = 0;
+  } else if (strcmp(mode, "qam16c2") == 0) {
+    config->ns = 5;
+    config->np = 31;
+    config->tcp = 0.004;
+    config->ts = 0.016;
+    config->nc = 33;
+    config->bps = 4;
+    config->txtbits = 0;
+    config->nuwbits = 42 * 4;
+    assert(config->nuwbits <= MAX_UW_BITS);
+    config->bad_uw_errors = 50;
+    config->ftwindowwidth = 80;
+    config->state_machine = "data";
+    config->amp_est_mode = 1;
+    config->tx_bpf_en = false;
+    config->clip_en = false;
+    config->data_mode = "streaming";
+    config->amp_scale = 135E3;
+    config->rx_bpf_en = false;
+
+    uint8_t uw[] = {1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1,
+                    0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0};
+    memset(config->tx_uw, 0, config->nuwbits);
+    memcpy(config->tx_uw, uw, sizeof(uw));
+    memcpy(&config->tx_uw[config->nuwbits - sizeof(uw)], uw, sizeof(uw));
+
+    config->EsNodB = 10;
+    config->codename = "H_16200_9720";
+    config->tx_bpf_proto = filtP1100S1300;
+    config->tx_bpf_proto_n = sizeof(filtP1100S1300) / sizeof(float);
   } else if (strcmp(mode, "datac0") == 0) {
     config->ns = 5;
     config->np = 4;

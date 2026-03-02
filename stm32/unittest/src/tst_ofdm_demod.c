@@ -249,7 +249,9 @@ int main(int argc, char *argv[]) {
             if (config_profile) PROFILE_SAMPLE_AND_LOG2(ofdm_demod_demod, "  ofdm_demod_demod");
             if (config_profile) PROFILE_SAMPLE(ofdm_demod_diss);
             ofdm_extract_uw(ofdm, ofdm->rx_np, ofdm->rx_amp, rx_uw);
-            ofdm_disassemble_qpsk_modem_packet(ofdm, ofdm->rx_np, ofdm->rx_amp, payload_syms, payload_amps, txt_bits);
+            ofdm_disassemble_psk_modem_packet(ofdm, ofdm->rx_np, ofdm->rx_amp,
+                                              payload_syms, payload_amps,
+                                              txt_bits);
             if (config_profile) PROFILE_SAMPLE_AND_LOG2(ofdm_demod_diss, "  ofdm_demod_diss");
             log_payload_syms_flag = 1;
 
@@ -290,12 +292,16 @@ int main(int argc, char *argv[]) {
                     uint8_t out_char[coded_bits_per_frame];
 
                         if (config_testframes) {
-                            Terrs += count_uncoded_errors(&ldpc, ofdm_config, codeword_symbols_de, 0);
+                            Terrs += count_uncoded_errors(
+                                &ldpc, ofdm_config, codeword_symbols_de,
+                                codeword_amps_de, 0);
                             Tbits += coded_bits_per_frame; 
                         }
 
-                            symbols_to_llrs(llr, codeword_symbols_de, codeword_amps_de,
-                                                 EsNo, ofdm->mean_amp, coded_syms_per_frame);
+                            symbols_to_llrs(llr, codeword_symbols_de,
+                                            codeword_amps_de, EsNo,
+                                            ofdm->mean_amp, ofdm->bps,
+                                            coded_syms_per_frame);
                             iter = run_ldpc_decoder(&ldpc, out_char, llr, &parityCheckCount);
 
                             //fprintf(stderr,"iter: %d pcc: %d\n", iter, parityCheckCount);
@@ -313,7 +319,9 @@ int main(int argc, char *argv[]) {
                             fwrite(out_char, sizeof(char), data_bits_per_frame, fout);
                 } else { 
                     /* lpdc_en == 0,  external LDPC decoder, so output LLRs */
-                    symbols_to_llrs(llr, codeword_symbols_de, codeword_amps_de, EsNo, ofdm->mean_amp, coded_syms_per_frame);
+                    symbols_to_llrs(llr, codeword_symbols_de, codeword_amps_de,
+                                    EsNo, ofdm->mean_amp, ofdm->bps,
+                                    coded_syms_per_frame);
                     fwrite(llr, sizeof(double), coded_bits_per_frame, fout);
                 }
             } else {    // !llrs_en (or ldpc_en)
@@ -356,7 +364,8 @@ int main(int argc, char *argv[]) {
                     txt_bits[i] = 0;
                 }
 
-                ofdm_assemble_qpsk_modem_packet(ofdm, tx_bits, payload_bits, txt_bits);
+                ofdm_assemble_psk_modem_packet(ofdm, tx_bits, payload_bits,
+                                               txt_bits);
 
                 Nerrs = 0;
                 for(i=0; i<ofdm_bitsperframe; i++) {
